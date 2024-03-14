@@ -38,6 +38,17 @@ void print(char byte) {
   UDR0 = byte;
 }
 
+void print_number(int number) {
+  char buffer[6]; // Buffer to hold the string representation of the number
+  itoa(number, buffer, 10); // Convert the number to a string
+  for (int i = 0; buffer[i] != '\0'; i++) {
+    print(buffer[i]); // Print each character of the string
+  }
+}
+
+int counter = 0;
+int print_counter = 0; // Counter for printing every 100ms
+
 void setup() {
   // Configure 16-bit Timer1
   TCCR1A = 0; // Clear Timer1 control register A
@@ -48,8 +59,16 @@ void setup() {
 }
 
 void loop() {
-  print('H');
-  delay_ms(1000); // Delay for 1 second
-  print('L');
-  delay_ms(1000); // Delay for 1 second
+  counter++;
+  delay_ms(20); // Delay for 20 milliseconds
+  
+  // Increment print_counter every 20 milliseconds
+  print_counter++;
+  
+  // If 100 milliseconds have passed, print the counter value and reset print_counter
+  if (print_counter == 5) {
+    print_counter = 0; // Reset print_counter
+    print_number(counter); // Print the counter value
+    print('\n'); // Print a newline character for clarity
+  }
 }
