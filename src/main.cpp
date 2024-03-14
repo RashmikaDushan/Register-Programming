@@ -1,51 +1,55 @@
 #include <avr/io.h>
-#include <avr/interrupt.h>
 #include <Arduino.h>
 
-volatile uint16_t counter = 0;
-
-ISR(TIMER1_OVF_vect)
-{
-  TCNT1 = 65519; // Timer Preloading
-  // Handle The 1ms Timer Interrupt
-  //...
-  counter++;
+void setup_uart() {
+  // Set baud rate to 9600
+  UBRR0H = 0;
+  UBRR0L = 103;
+  
+  // Enable receiver and transmitter
+  UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+  
+  // Set frame format: 8 data bits, 1 stop bit
+  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 }
 
-// void delay_ms(uint16_t ms)
-// {
-//   counter = 0;
-//   while (counter < ms)
-//   {
-//     // Wait
-//   }
-// }
-
-void delay_us(uint16_t us)
-{
-  counter = 0;
-  while (counter < us)
-  {
+void delay_us(uint16_t us) {
+  // Configure Timer1 for microsecond delay
+  TCNT1 = 0; // Reset Timer1 counter
+  
+  // Calculate the number of timer ticks needed for the given microseconds
+  uint16_t ticks = us * 16;
+  while (TCNT1 < ticks) {
     // Wait
   }
 }
 
-void setup()
-{
-  TCCR1A = 0;           // Init Timer1
-  TCCR1B = 0;           // Init Timer1
-  TCCR1B |= 0b00000001;  // No prescaller
-  TCNT1 = 65519;        // Timer Preloading
-  TIMSK1 |= 0b00000001;  // Enable Timer Overflow Interrupt
-  pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(9600);
+void delay_ms(uint16_t ms) {
+  for (uint16_t i = 0; i < ms; ++i) {
+    delay_us(1000); // Delay 1 millisecond
+  }
 }
-void loop()
-{
-  Serial.println("Start");
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay_us(1000);
-  Serial.println("end");
-  digitalWrite(LED_BUILTIN, LOW);
-  delay_us(1000);
+
+void print(char byte) {
+  // Wait for empty transmit buffer
+  while (!(UCSR0A & (1 << UDRE0)));
+  
+  // Put data into buffer, sends the data
+  UDR0 = byte;
+}
+
+void setup() {
+  // Configure 16-bit Timer1
+  TCCR1A = 0; // Clear Timer1 control register A
+  TCCR1B = (1 << CS10); // Set prescaler to CLK/1
+  
+  // Configure UART
+  setup_uart();
+}
+
+void loop() {
+  print('H');
+  delay_ms(1000); // Delay for 1 second
+  print('L');
+  delay_ms(1000); // Delay for 1 second
 }
